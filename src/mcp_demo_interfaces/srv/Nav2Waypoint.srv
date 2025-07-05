@@ -1,0 +1,4 @@
+# Make a request to Nav2 to move the robot to a waypoint
+
+string name # lower_snake_case name of the waypoint
+---

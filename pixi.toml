@@ -1,0 +1,51 @@
+[workspace]
+name = "ros2mcp"
+version = "0.1.0"
+description = "ROS2 MCP Server"
+authors = ["Nicolas Gres <info@gres.io>"]
+channels = ["robostack-jazzy", "conda-forge"]
+platforms = ["linux-64", "win-64", "osx-arm64"]
+
+[activation]
+scripts = ["install/setup.sh"]
+[target.win-64.activation]
+scripts = ["install/setup.bat"]
+
+[activation.env]
+RMW_IMPLEMENTATION = "rmw_cyclonedds_cpp"
+
+[tasks]
+sim = "ros2 run turtlesim turtlesim_node"
+start-tb4 = "ros2 launch nav2_bringup tb4_simulation_launch.py headless:=False"
+build = { cmd = "colcon build --symlink-install --cmake-args -G Ninja -DPython_FIND_VIRTUALENV=ONLY -DPython3_FIND_VIRTUALENV=ONLY", inputs = [
+    "src",
+], outputs = [
+    "install",
+    "build",
+] }
+mcp = { cmd = "ros2 run mcp_server mcp_server", depends-on = ["build"] }
+demo-tb4 = { cmd = "ros2 launch mcp_demo_node tb4.launch.py", depends-on = [
+    "build",
+] }
+
+[dependencies]
+python = ">=3.11,<3.12"
+ros-jazzy-desktop = "*"
+ros-jazzy-turtlesim = "*"
+ros-jazzy-ament-cmake-auto = "*"
+ros-jazzy-nav2-bringup = "*"
+compilers = "*"
+pkg-config = "*"
+cmake = "*"
+make = "*"
+ninja = "*"
+colcon-common-extensions = "*"
+setuptools = "<=70.4"
+mcp = "*"
+anyio = "*"
+starlette = "*"
+uvicorn = "*"
+numpy = "*"
+
+[target.linux.dependencies]
+libgl-devel = "*"

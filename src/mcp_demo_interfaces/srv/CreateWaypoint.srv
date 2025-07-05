@@ -1,0 +1,5 @@
+# Create a new waypoint at the current robot position
+
+string name # lower_snake_case name of the waypoint
+string description
+---
