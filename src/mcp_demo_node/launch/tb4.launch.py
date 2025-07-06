@@ -8,16 +8,16 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     return LaunchDescription(
         [
-            IncludeLaunchDescription(
-                PathJoinSubstitution(
-                    [
-                        FindPackageShare("nav2_bringup"),
-                        "launch",
-                        "tb4_simulation_launch.py",
-                    ]
-                ),
-                launch_arguments={"headless": "False"}.items(),
-            ),
+            # IncludeLaunchDescription(
+            #     PathJoinSubstitution(
+            #         [
+            #             FindPackageShare("nav2_bringup"),
+            #             "launch",
+            #             "tb4_simulation_launch.py",
+            #         ]
+            #     ),
+            #     launch_arguments={"headless": "False"}.items(),
+            # ),
             Node(
                 package="mcp_demo_node",
                 executable="node",
@@ -34,12 +34,15 @@ def generate_launch_description():
                 output="screen",
                 parameters=[
                     {
-                        "included_resource_topics": ["*/waypoints"],
+                        "included_resource_topics": [
+                            "*/waypoints",
+                            "/rgbd_camera/image",
+                        ],
                         "included_tool_services": [
                             "*/navigate_to_waypoint",
                             "*/create_waypoint",
                         ],
-                        "included_tool_topics": ["/"],
+                        "included_tool_topics": ["/cmd_vel"],
                     },
                 ],
             ),

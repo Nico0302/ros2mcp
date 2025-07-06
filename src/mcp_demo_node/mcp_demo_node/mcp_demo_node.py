@@ -67,6 +67,8 @@ class McpDemoNode(Node):
         # Stores current position of the robot
         self.position = None
 
+        self.create_timer(1, self.publish_waypoints)
+
         self.get_logger().info("MCP Demo Node started successfully.")
 
     def _find_waypoint(self, waypoint_shortname):
@@ -101,19 +103,12 @@ class McpDemoNode(Node):
         Publishes the string of available waypoints and their distances relative to the robot
             to the /waypoints topic.
         """
-        if self.position is not None:
-            waypoint_list = WaypointList(
-                waypoints=[
-                    waypoint.to_message(self.position)
-                    for waypoint in self.waypoint_list
-                ]
-            )
-            self.waypoints_publisher_.publish(waypoint_list)
-            self.get_logger().info('Publishing: "%s"' % waypoint_list)
-        else:
-            self.get_logger().info(
-                "Position has not be published by amcl_pose. Set starting pose in Nav2."
-            )
+        position = self.position if self.position is not None else Pose()
+        waypoint_list = WaypointList(
+            waypoints=[waypoint.to_message(position) for waypoint in self.waypoint_list]
+        )
+        self.waypoints_publisher_.publish(waypoint_list)
+        self.get_logger().info('Publishing: "%s"' % waypoint_list)
 
     def pose_listener_callback(self, msg: PoseWithCovarianceStamped):
         """

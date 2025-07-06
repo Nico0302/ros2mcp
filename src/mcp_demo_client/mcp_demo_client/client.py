@@ -10,8 +10,8 @@ from openai.types.chat.chat_completion_message_param import ChatCompletionMessag
 from openai.types.chat.chat_completion_tool_param import (
     ChatCompletionToolParam,
 )
-from openai.types.chat.chat_completion_developer_message_param import (
-    ChatCompletionDeveloperMessageParam,
+from openai.types.chat.chat_completion_content_part_param import (
+    ChatCompletionContentPartParam,
 )
 from openai.types.chat.chat_completion_message_tool_call import (
     ChatCompletionMessageToolCall,
@@ -50,9 +50,9 @@ class Client:
         tools = await self.mcp_session.list_tools()
 
         self.resources = response.resources
-        self.tools = map(self._get_tool, tools.tools)
+        self.tools = list(map(self._get_tool, tools.tools))
 
-    async def _get_context_prompt(self) -> ChatCompletionDeveloperMessageParam:
+    async def _get_context_prompt(self) -> Iterable[ChatCompletionContentPartParam]:
         """
         Creates a context prompt based on the resources available in the MCP server.
         It combines all resources into a single string that can be used as context for the LLM and attached images.
@@ -71,22 +71,22 @@ class Client:
                     text_content += f"Blob: {content_block.mimeType}\n"
                     image_content.append(
                         {
-                            "type": "image",
-                            "url": f"data:{content_block.mimeType};base64,{content_block.blob}",
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{content_block.mimeType};base64,{content_block.blob}",
+                                "detail": "auto",
+                            },
                         }
                     )
                 text_content += "\n"
         text_content += "=== End of MCP Resources ===\n"
-        return {
-            "role": "developer",
-            "content": [
-                {
-                    "type": "text",
-                    "text": text_content.strip(),
-                },
-                *image_content,
-            ],
-        }
+        return [
+            {
+                "type": "text",
+                "text": text_content.strip(),
+            },
+            *image_content,
+        ]
 
     def _get_tool(self, tool: Tool) -> ChatCompletionToolParam:
         """
@@ -127,20 +127,27 @@ class Client:
         """
         Creates a completion using the LLM based on the current history and context.
         """
-        context = await self._get_context_prompt()
-        assert len(self.history) > 0, "History must not be empty"
-        # add context before the last item in the history
-        messages = self.history[:-1] + [context] + [self.history[-1]]
+        messages = self.history
+        # Create a copy of the last message and inject context into it
+        last_message = messages[-1].copy()
+        if last_message["role"] == "user":
+            context_content = await self._get_context_prompt()
+            # Create new content by combining existing content with context
+            existing_content = last_message.get("content", [])
+            if isinstance(existing_content, str):
+                existing_content = [{"type": "text", "text": existing_content}]
+            last_message["content"] = [*context_content, *existing_content]  # type: ignore
+            # Create new messages list with the modified last message
+            messages = messages[:-1] + [last_message]
+
         response = self.client.chat.completions.create(
-            model=LLM_MODEL, messages=messages, tools=self.tools
+            model=LLM_MODEL,
+            messages=messages,
+            tools=self.tools,
         )
+
         response_message = response.choices[0].message
-        self.history.append(
-            {
-                "role": response_message.role,
-                "content": response_message.content,
-            }
-        )
+        self.history.append(response_message)  # type: ignore
 
         call_count += 1
 
@@ -156,13 +163,20 @@ class Client:
             # run the function call
             await self._execute_tool_calls(response_message.tool_calls)
             # pass the result back to the model
-            await self._create_completion(call_count)
+            return await self._create_completion(call_count)
 
     async def ask(self, user_input: str):
         """
         Sends a user input to the LLM and returns the response.
         """
-        self.history.append({"role": "user", "content": user_input})
+        self.history.append(
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": user_input},
+                ],
+            }
+        )
         response = await self._create_completion()
         return response
 

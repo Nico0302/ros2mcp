@@ -26,13 +26,13 @@ class ImageAdapter(ContentAdapter):
     An adapter for sensor_msgs/Image to convert images to MCP compatible formats.
     """
 
-    def __init__(self, message: Image, extension: str = "jpeg") -> None:
+    def __init__(self, message: Image, extension: str = "webp") -> None:
         """
         Initializes the ImageAdapter with a sensor_msgs/Image message and an optional file extension.
 
         Args:
             message (Image): The sensor_msgs/Image message to adapt.
-            extension (str): The file extension for the image format (default is "jpeg").
+            extension (str): The file extension for the image format (default is "webp").
         """
         self.message = message
         self.extension = extension
@@ -46,7 +46,7 @@ class ImageAdapter(ContentAdapter):
         """
         return f"image/{self.extension}"
 
-    def _base64(self) -> str:
+    def _base64(self) -> bytes:
         """
         Converts the image to a base64 encoded string.
 
@@ -78,7 +78,7 @@ class ImageAdapter(ContentAdapter):
                 raise ValueError(f"Unsupported encoding: {encoding}")
 
         _, buffer = cv2.imencode(f".{self.extension}", image)
-        return base64.b64encode(buffer).decode("utf-8")  # type: ignore
+        return buffer.tobytes()
 
     def get_resource_contents(self) -> list[ReadResourceContents]:
         """
@@ -104,7 +104,7 @@ class ImageAdapter(ContentAdapter):
         return [
             types.ImageContent(
                 type="image",
-                data=self._base64(),
+                data=base64.b64encode(self._base64()).decode("utf-8"),
                 mimeType=self._mime_type(),
             )
         ]
