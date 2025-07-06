@@ -20,7 +20,7 @@ pixi run start-tb4
 This might take a while on the first run as it downloads the necessary assets.
 
 3. After Gazebo and Rviz2 are running, select the `2D Pose Estimate` tool in Rviz2 to set the robot's initial position by clicking in the center of the map and dragging to right:
-![Rviz2 selecting 2D pose estimate]
+![Rviz2 selecting 2D pose estimate](./assets/rviz.jpg)
 
 4. Launch the MCP server and demo node (this will also run `build`):
 ```bash

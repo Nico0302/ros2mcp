@@ -32,6 +32,13 @@ demo-tb4 = { cmd = "bash -c 'source install/setup.bash && ros2 launch mcp_demo_n
 demo-client = { cmd = "ros2 run mcp_demo_client client", depends-on = [
     "build",
 ] }
+docs = { cmd = "rosdoc2 build --package-path src/mcp_server/", depends-on = [
+    "build",
+], inputs = [
+    "src/mcp_server/doc",
+], outputs = [
+    "docs_build",
+] }
 
 
 [dependencies]

@@ -15,3 +15,6 @@ log
 install
 build
 .env
+/docs_build
+/docs_output
+/cross_reference
