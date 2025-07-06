@@ -2,6 +2,8 @@
 
 Expose arbitrary [ROS 2](https://www.ros.org/) services as [MCP](https://modelcontextprotocol.io/) tools and list topics as resources.
 
+The `mcp_server` node can translate any ROS topic and service into a MCP resource or tool (including source comments as parameter descriptions).
+
 # Setup
 
 1. Clone the repository:

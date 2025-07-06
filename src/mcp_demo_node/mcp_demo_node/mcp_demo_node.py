@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright 2024 Lucas Butler
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +18,15 @@ from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped, Pose
 import rclpy
 from rclpy.node import Node
 import json
-from mcp_demo_interfaces.srv import CreateWaypoint, Nav2Waypoint
-from mcp_demo_interfaces.msg import WaypointList
+from mcp_demo_msgs.srv import CreateWaypoint, Nav2Waypoint
+from mcp_demo_msgs.msg import WaypointList
 from rcl_interfaces.msg import ParameterDescriptor
 from nav2_simple_commander.robot_navigator import BasicNavigator
 import os
 from mcp_demo_node.waypoint import Waypoint
 
 
-class Waypoints(Node):
+class McpDemoNode(Node):
     def __init__(self):
         super().__init__("mcp_demo_node")
 
@@ -64,6 +66,8 @@ class Waypoints(Node):
 
         # Stores current position of the robot
         self.position = None
+
+        self.get_logger().info("MCP Demo Node started successfully.")
 
     def _find_waypoint(self, waypoint_shortname):
         for point in self.waypoint_list:
@@ -166,8 +170,8 @@ class Waypoints(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    waypoints = Waypoints()
-    rclpy.spin(waypoints)
+    node = McpDemoNode()
+    rclpy.spin(node)
     rclpy.shutdown()
 
 

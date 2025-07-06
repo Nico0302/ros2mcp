@@ -21,10 +21,10 @@ def generate_launch_description():
             Node(
                 package="mcp_demo_node",
                 executable="mcp_demo_node",
-                name="demo",
+                name="waypoints",
                 output="screen",
                 parameters=[
-                    {"waypoint_storage_file": "/tmp/waypoints.json"},
+                    {"waypoint_storage_file": "./assets/waypoints.json"},
                 ],
             ),
             Node(

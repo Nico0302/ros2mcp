@@ -1,0 +1,87 @@
+[
+    {
+        "name": "hand_forklift_1",
+        "description": "Manual hand forklist carrying a big wooden box",
+        "location": {
+            "position": {
+                "x": 6.945878434731933,
+                "y": 2.3217940135058597,
+                "z": 0.0
+            },
+            "orientation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.16961459728445807,
+                "w": 0.9855104709682344
+            }
+        }
+    },
+    {
+        "name": "hand_forklift_2",
+        "description": "Manual hand forklift carrying a bunch of small cardboard boxes",
+        "location": {
+            "position": {
+                "x": 6.573003571374846,
+                "y": -2.3133135810528414,
+                "z": 0.0
+            },
+            "orientation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": -0.14182755859022134,
+                "w": 0.9898913797100858
+            }
+        }
+    },
+    {
+        "name": "restroom_door",
+        "description": "Restroom entrance",
+        "location": {
+            "position": {
+                "x": 2.2499610119403353,
+                "y": -6.573331399456719,
+                "z": 0.0
+            },
+            "orientation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": -0.8152668917859073,
+                "w": 0.5790853953932406
+            }
+        }
+    },
+    {
+        "name": "exit_door",
+        "description": "Exit door",
+        "location": {
+            "position": {
+                "x": 22.2070131373112,
+                "y": -3.9314574545165533,
+                "z": 0.0
+            },
+            "orientation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.17115141958309216,
+                "w": 0.9852447368926628
+            }
+        }
+    },
+    {
+        "name": "staircase",
+        "description": "Steel staircase leading to the next level",
+        "location": {
+            "position": {
+                "x": 21.011686555504138,
+                "y": 4.257217984488196,
+                "z": 0.0
+            },
+            "orientation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": -0.634779021284662,
+                "w": 0.7726937259593134
+            }
+        }
+    }
+]

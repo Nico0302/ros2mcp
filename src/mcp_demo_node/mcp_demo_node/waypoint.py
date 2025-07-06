@@ -14,7 +14,7 @@
 
 import math
 from geometry_msgs.msg import Pose, Point
-from mcp_demo_interfaces.msg import Waypoint as WaypointMsg
+from mcp_demo_msgs.msg import Waypoint as WaypointMsg
 
 
 class Waypoint:
