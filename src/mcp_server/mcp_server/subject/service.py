@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List
+from typing import Sequence
 from mcp.types import Tool as MCPTool
 from rclpy.task import Future
 from rclpy.node import Node
@@ -31,17 +31,23 @@ class Service(ToolAdapter):
     ROS services as an LLM tool
     """
 
-    def __init__(self, name: str, type_name: str, namespace: str = "") -> None:
-        super().__init__(name, type_name, namespace)
-
+    def __init__(
+        self, node: Node, name: str, type_name: str, namespace: str = ""
+    ) -> None:
+        self.node = node
+        self.name = name
+        self.type_name = type_name
+        self.namespace = namespace
         self.srv_module = self._get_srv_module()
         self.request = self.srv_module.Request()
         self.json_schema = JSONSchema()
 
-    def call_tool(self, node: Node, uri: str, values: dict) -> Future:
-        node.get_logger().info(f"Calling service {self.name} of type {self.type_name}")
+    def call_tool(self, values: dict) -> Future:
+        self.node.get_logger().info(
+            f"Calling service {self.name} of type {self.type_name}"
+        )
 
-        cli = node.create_client(self.srv_module, self.name)
+        cli = self.node.create_client(self.srv_module, self.name)
 
         try:
             set_message_fields(self.request, values)
@@ -49,12 +55,12 @@ class Service(ToolAdapter):
             raise RuntimeError("Failed to populate field: {0}".format(e))
 
         while not cli.wait_for_service(timeout_sec=1.0):
-            node.get_logger().info("service not available, waiting again...")
+            self.node.get_logger().info("service not available, waiting again...")
 
         return cli.call_async(self.request)
 
     @staticmethod
-    def discover(node: Node) -> List[Subject]:
+    def discover(node: Node) -> Sequence[Subject]:
         tools = []
         services = []
         try:
@@ -67,7 +73,7 @@ class Service(ToolAdapter):
             if topic_or_service_is_hidden(service_name):
                 continue
             for service_type in type_names:
-                tools.append(Service(service_name, service_type))
+                tools.append(Service(node, service_name, service_type))
         return tools
 
     def _get_srv_module(self):
@@ -88,7 +94,7 @@ class Service(ToolAdapter):
             raise RuntimeError("The passed type is not a service")
         return srv_module
 
-    def list_tools(self) -> List[MCPTool]:
+    def get_tool_metadata(self) -> MCPTool:
         spec = parser.parse_service_file(
             *self.json_schema.get_interface_path(self.type_name)
         )
@@ -96,12 +102,10 @@ class Service(ToolAdapter):
 
         desc = self.json_schema.get_description(spec.request)
 
-        return [
-            types.Tool(
-                name=self.get_names()[0],
-                inputSchema=inputSchema,
-                description=desc["description"]
-                if "description" in desc
-                else "Call ROS2 service",
-            )
-        ]
+        return types.Tool(
+            name=self.get_name(),
+            inputSchema=inputSchema,
+            description=desc["description"]
+            if "description" in desc
+            else "Call ROS2 service",
+        )

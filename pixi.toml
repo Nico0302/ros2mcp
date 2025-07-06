@@ -7,7 +7,7 @@ channels = ["robostack-jazzy", "conda-forge"]
 platforms = ["linux-64", "win-64", "osx-arm64"]
 
 [activation]
-scripts = ["install/setup.bash"]
+scripts = ["install/setup.sh"]
 [target.win-64.activation]
 scripts = ["install/setup.bat"]
 
@@ -24,17 +24,20 @@ build = { cmd = "colcon build --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -D
 ] }
 sim = "ros2 run turtlesim turtlesim_node"
 start-tb4 = "ros2 launch nav2_bringup tb4_simulation_launch.py headless:=False"
+start-mcp = { cmd = "ros2 run mcp_server mcp_server", depends-on = ["build"] }
 mcp = { cmd = "ros2 run mcp_server mcp_server", depends-on = ["build"] }
 demo-tb4 = { cmd = "bash -c 'source install/setup.bash && ros2 launch mcp_demo_node tb4.launch.py'", depends-on = [
     "build",
 ] }
+demo-client = { cmd = "ros2 run mcp_demo_client client", depends-on = [
+    "build",
+] }
+
 
 [dependencies]
 python = ">=3.12.0,<3.13"
 ros-jazzy-desktop = "*"
-ros-jazzy-turtlesim = "*"
 ros-jazzy-ament-cmake-auto = "*"
-ros-jazzy-nav2-bringup = "*"
 compilers = "*"
 pkg-config = "*"
 cmake = "<4.0"
@@ -44,9 +47,21 @@ colcon-common-extensions = "*"
 setuptools = "<=70.4"
 mcp = "*"
 anyio = "*"
-starlette = "*"
+starlette = ">=0.40.0,<0.47.0"
 uvicorn = "*"
 numpy = "*"
+
+# demo
+ros-jazzy-turtlesim = "*"
+ros-jazzy-nav2-bringup = "*"
+termcolor = ">=3.1.0,<4"
+openai = ">=1.93.0,<2"
+python-dotenv = ">=1.1.1,<2"
+
+[pypi-dependencies]
+# docs
+rosdoc2 = "*"
+shibuya = "*"
 
 [target.linux.dependencies]
 libgl-devel = "*"

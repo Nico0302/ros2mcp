@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import importlib
-from typing import Any, List
+from typing import Any, Sequence
 from pydantic import AnyUrl
 from rclpy.node import Node
 import rclpy.publisher
@@ -35,18 +35,21 @@ class Topic(ToolAdapter, ResourceAdapter):
     publisher: rclpy.publisher.Publisher | None
     subscription: rclpy.subscription.Subscription | None
 
-    def __init__(self, name: str, type_name: str) -> None:
+    def __init__(self, node: Node, name: str, type_name: str) -> None:
+        self.node = node
         self.name = name
         self.type_name = type_name
         self.publisher = None
         self.json_schema = JSONSchema()
         self.value = None  # The last received message value
 
-    def setup_tool(self, node: Node) -> None:
-        self.publisher = node.create_publisher(self._get_msg_module(), self.name, 10)
+    def setup_tool(self) -> None:
+        self.publisher = self.node.create_publisher(
+            self._get_msg_module(), self.name, 10
+        )
 
-    def setup_resource(self, node: Node) -> None:
-        self.subscription = node.create_subscription(
+    def setup_resource(self) -> None:
+        self.subscription = self.node.create_subscription(
             self._get_msg_module(), self.name, self._listener_callback, 10
         )
 
@@ -56,11 +59,12 @@ class Topic(ToolAdapter, ResourceAdapter):
         """
         self.value = msg
 
-    def call_tool(self, node, uri: str, values):
+    def call_tool(self, values) -> None:
         if self.publisher is None:
             raise RuntimeError("The publisher is not initialized")
         if "values" not in values:
             raise RuntimeError("The values key is missing")
+
         msg_module = self._get_msg_module()
         msg = msg_module()
         try:
@@ -80,22 +84,20 @@ class Topic(ToolAdapter, ResourceAdapter):
 
         timer_callback()
         if times != 1:
-            timer = node.create_timer(1, timer_callback)
+            timer = self.node.create_timer(1, timer_callback)
             while times == 0 or count < times:
-                rclpy.spin_once(node)
-            node.destroy_timer(timer)
+                rclpy.spin_once(self.node)
+            self.node.destroy_timer(timer)
 
         return None
 
-    def list_resources(self) -> List[types.Resource]:
-        return [
-            types.Resource(uri=AnyUrl(self.get_uris()[0]), name=f"Topic: {self.name}")
-        ]
+    def get_resource_metadata(self) -> types.Resource:
+        return types.Resource(uri=AnyUrl(self.get_uri()), name=f"Topic: {self.name}")
 
     def read_resource(self) -> Any:
         return self.value
 
-    def list_tools(self) -> List[types.Tool]:
+    def get_tool_metadata(self) -> types.Tool:
         inputSchema = {
             "type": "object",
             "properties": {
@@ -110,16 +112,14 @@ class Topic(ToolAdapter, ResourceAdapter):
             "required": ["values"],
         }
 
-        return [
-            types.Tool(
-                name=self.get_names()[0],
-                description="Publishes a message to a ROS2 topic",
-                inputSchema=inputSchema,
-            )
-        ]
+        return types.Tool(
+            name=self.get_name(),
+            description="Publishes a message to a ROS2 topic",
+            inputSchema=inputSchema,
+        )
 
     @staticmethod
-    def discover(node) -> List[Subject]:
+    def discover(node) -> Sequence[Subject]:
         tools = []
         topics = []
         try:
@@ -134,7 +134,7 @@ class Topic(ToolAdapter, ResourceAdapter):
             if topic_or_service_is_hidden(topic_name):
                 continue
             for topic_type in type_names:
-                tools.append(Topic(topic_name, topic_type))
+                tools.append(Topic(node, topic_name, topic_type))
         return tools
 
     def _get_msg_module(self):

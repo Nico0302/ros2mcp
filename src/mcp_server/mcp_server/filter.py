@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from fnmatch import fnmatch
+from typing import Sequence
 from mcp_server.subject.subject import Subject
 
 
@@ -21,7 +22,9 @@ class EntityFilter:
     A filter for entities based on their type and name.
     """
 
-    def __init__(self, include_list: list[str] = [], exclude_list: list[str] = []):
+    def __init__(
+        self, include_list: Sequence[str] = [], exclude_list: Sequence[str] = []
+    ):
         self.include_list = include_list
         self.exclude_list = exclude_list
 
@@ -33,7 +36,7 @@ class EntityFilter:
             entity.name, self.exclude_list
         )
 
-    def apply(self, entities: list[Subject]) -> list[Subject]:
+    def apply(self, entities: Sequence[Subject]) -> Sequence[Subject]:
         """
         Apply the filter to a list of entities.
         Returns a list of entities that match the filter criteria.

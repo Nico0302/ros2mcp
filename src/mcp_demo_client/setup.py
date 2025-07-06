@@ -1,8 +1,6 @@
-import os
-from glob import glob
 from setuptools import find_packages, setup
 
-package_name = "mcp_demo_node"
+package_name = "mcp_demo_client"
 
 setup(
     name=package_name,
@@ -11,19 +9,17 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
-        (
-            os.path.join("share", package_name, "launch"),
-            glob(os.path.join("launch", "*launch.[pxy][yma]*")),
-        ),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
     maintainer="nicolas",
-    maintainer_email="nicolas@gres.io",
+    maintainer_email="nicolas@todo.todo",
     description="TODO: Package description",
     license="TODO: License declaration",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["node = mcp_demo_node.mcp_demo_node:main"],
+        "console_scripts": [
+            "client = mcp_demo_client.client:main",
+        ],
     },
 )

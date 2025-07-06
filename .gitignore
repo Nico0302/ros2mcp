@@ -14,3 +14,4 @@ pytest-temp
 log
 install
 build
+.env

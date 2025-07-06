@@ -20,7 +20,7 @@ def generate_launch_description():
             ),
             Node(
                 package="mcp_demo_node",
-                executable="mcp_demo_node",
+                executable="node",
                 name="waypoints",
                 output="screen",
                 parameters=[
@@ -34,12 +34,12 @@ def generate_launch_description():
                 output="screen",
                 parameters=[
                     {
-                        "include_resource_topics": ["*/waypoints"],
-                        "include_tool_services": [
+                        "included_resource_topics": ["*/waypoints"],
+                        "included_tool_services": [
                             "*/navigate_to_waypoint",
                             "*/create_waypoint",
                         ],
-                        "include_tool_topics": ["/"],
+                        "included_tool_topics": ["/"],
                     },
                 ],
             ),

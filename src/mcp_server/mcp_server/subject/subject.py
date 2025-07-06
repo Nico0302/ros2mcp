@@ -14,6 +14,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Sequence
 from rclpy.node import Node
 
 
@@ -27,7 +28,7 @@ class Subject(ABC):
 
     @staticmethod
     @abstractmethod
-    def discover(node: Node) -> list["Subject"]:
+    def discover(node: Node) -> Sequence["Subject"]:
         """
         Discover all entities of this type in the given node.
         This method should be implemented by subclasses to discover specific entities.

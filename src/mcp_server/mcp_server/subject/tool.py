@@ -12,17 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List
-from rclpy.task import Future
-from rclpy.node import Node
 from abc import ABC, abstractmethod
 import mcp.types as types
+from rclpy.task import Future
 
 from mcp_server.subject.subject import Subject
 
 
-class ToolAdapter(Subject, ABC):
-    def setup_tool(self, node: Node) -> None:
+class Tool(ABC):
+    def setup_tool(self) -> None:
         """
         Setup the tool for use in the context of the given node.
         (Not every tool needs to implement this method)
@@ -30,24 +28,32 @@ class ToolAdapter(Subject, ABC):
         pass
 
     @abstractmethod
-    def call_tool(self, node: Node, uri: str, values: dict) -> Future | None:
+    def call_tool(self, values: dict) -> Future | None:
         """
-        Call the tool with the given values from a ROS node.
+        Call the tool with the given values.
         """
         pass
 
     @abstractmethod
-    def list_tools(self) -> List[types.Tool]:
+    def get_tool_metadata(self) -> types.Tool:
         """
-        Get the tool definitions. One adapter can provide multiple MCP tools
+        Get the tool definition.
         """
         pass
 
-    def get_names(self) -> list[str]:
+    @abstractmethod
+    def get_name(self) -> str:
+        """
+        Returns a list of names for the entity.
+        """
+
+
+class ToolAdapter(Subject, Tool, ABC):
+    def get_name(self) -> str:
         """
         Returns a list of names for the entity.
         """
         name = self.name[1:60].replace("/", "_").replace(" ", "_")
         if self.namespace:
             name = f"{self.namespace}_{name}"
-        return [name]
+        return name

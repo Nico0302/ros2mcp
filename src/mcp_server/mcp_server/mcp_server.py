@@ -14,7 +14,7 @@
 
 import contextlib
 import threading
-from typing import AsyncIterator, Iterable
+from typing import AsyncIterator, Iterable, Sequence
 from pydantic import AnyUrl
 from rclpy.executors import MultiThreadedExecutor
 import rclpy
@@ -24,18 +24,17 @@ from mcp.server.lowlevel import Server
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.server.lowlevel.helper_types import ReadResourceContents
 from rcl_interfaces.msg import ParameterDescriptor
+from mcp_server.subject.resource import ListResourcesTool, ReadResourceTool, Resource
+from mcp_server.subject.tool import Tool
 from mcp_server.filter import EntityFilter
 import asyncio
 from starlette.applications import Starlette
 from starlette.routing import Mount
 from starlette.types import Receive, Scope, Send
-from typing import cast
 import uvicorn
 from mcp_server.message import MessageAdapter
 from mcp_server.subject.service import Service
 from mcp_server.subject.topic import Topic
-from mcp_server.subject.resource import ResourceAdapter
-from mcp_server.subject.tool import ToolAdapter
 
 server = Server("ros2mcp")
 
@@ -45,8 +44,8 @@ class MCPNode(Node):
     A ROS 2 node that provides a service to call tools and a service to get tool descriptions.
     """
 
-    tools: dict[str, ToolAdapter]
-    resources: dict[str, ResourceAdapter]
+    tools: dict[str, Tool]
+    resources: dict[str, Resource]
 
     def __init__(self):
         super().__init__("mcp_server")
@@ -63,45 +62,52 @@ class MCPNode(Node):
         )
 
         self.declare_parameter(
-            "include_resource_topics",
+            "included_resource_topics",
             ["/*"],
             ParameterDescriptor(
                 description='List of topic names to include in the resource discovery. Use "*" as a wildcard.'
             ),
         )
         self.declare_parameter(
-            "exclude_resource_topics",
+            "excluded_resource_topics",
             ["/"],
             ParameterDescriptor(
                 description='List of topic names to exclude from the resource discovery. Use "*" as a wildcard.'
             ),
         )
         self.declare_parameter(
-            "include_tool_services",
+            "included_tool_services",
             ["/*"],
             ParameterDescriptor(
                 description='List of service names to include in the tool discovery. Use "*" as a wildcard.'
             ),
         )
         self.declare_parameter(
-            "exclude_tool_services",
+            "excluded_tool_services",
             ["*parameter*"],
             ParameterDescriptor(
                 description='List of service names to exclude from the tool discovery. Use "*" as a wildcard.'
             ),
         )
         self.declare_parameter(
-            "include_tool_topics",
+            "included_tool_topics",
             ["/*"],
             ParameterDescriptor(
                 description='List of topic names to include in the tool discovery. Use "*" as a wildcard.'
             ),
         )
         self.declare_parameter(
-            "exclude_tool_topics",
+            "excluded_tool_topics",
             ["*parameter*"],
             ParameterDescriptor(
                 description='List of topic names to exclude from the tool discovery. Use "*" as a wildcard.'
+            ),
+        )
+        self.declare_parameter(
+            "enable_resource_tools",
+            False,
+            ParameterDescriptor(
+                description="Enables the list_resources and read_resource tools."
             ),
         )
 
@@ -116,94 +122,97 @@ class MCPNode(Node):
         return MessageAdapter(resource_result).get_resource_contents()
 
     async def list_resources(self) -> list[types.Resource]:
-        include_resource_topics = (
-            self.get_parameter("include_resource_topics")
+        included_resource_topics = (
+            self.get_parameter("included_resource_topics")
             .get_parameter_value()
             .string_array_value
         )
-        exclude_resource_topics = (
-            self.get_parameter("exclude_resource_topics")
+        excluded_resource_topics = (
+            self.get_parameter("excluded_resource_topics")
             .get_parameter_value()
             .string_array_value
+        )
+        enable_resource_tools = (
+            self.get_parameter("enable_resource_tools").get_parameter_value().bool_value
         )
 
         resource_topic_filter = EntityFilter(
-            include_resource_topics,
-            exclude_resource_topics,
+            included_resource_topics,  # type: ignore
+            excluded_resource_topics,  # type: ignore
         )
 
-        resources = []
+        resources: Sequence[Resource] = []
+
+        if enable_resource_tools:
+            # Add the resource tools if enabled
+            resources.append(ListResourcesTool(self.resources))  # type: ignore
+            resources.append(ReadResourceTool(self.resources))  # type: ignore
 
         for node_name in self.get_node_names():
             if node_name == self.get_name():
                 continue
-            resources += cast(
-                list[types.Resource], resource_topic_filter.apply(Topic.discover(self))
-            )
+            resources += resource_topic_filter.apply(Topic.discover(self))  # type: ignore
 
         for resource in resources:
             # check if resource already setup
-            if any(uri in self.resources for uri in resource.get_uris()):
+            if resource.get_uri() in self.resources:
                 continue
-            resource.setup_resource(self)
-            for uri in resource.get_uris():
-                self.resources[uri] = resource
+            resource.setup_resource()
+            self.resources[resource.get_uri()] = resource
 
-        definitions = []
-        for resource in self.resources.values():
-            definitions += resource.list_resources()
+        definitions = [
+            resource.get_resource_metadata() for resource in self.resources.values()
+        ]
 
         return definitions
 
     async def list_tools(self) -> list[types.Tool]:
-        include_tool_services = (
-            self.get_parameter("include_tool_services")
+        included_tool_services = (
+            self.get_parameter("included_tool_services")
             .get_parameter_value()
             .string_array_value
         )
-        exclude_tool_services = (
-            self.get_parameter("exclude_tool_services")
+        excluded_tool_services = (
+            self.get_parameter("excluded_tool_services")
             .get_parameter_value()
             .string_array_value
         )
-        include_tool_topics = (
-            self.get_parameter("include_tool_topics")
+        included_tool_topics = (
+            self.get_parameter("included_tool_topics")
             .get_parameter_value()
             .string_array_value
         )
-        exclude_tool_topics = (
-            self.get_parameter("exclude_tool_topics")
+        excluded_tool_topics = (
+            self.get_parameter("excluded_tool_topics")
             .get_parameter_value()
             .string_array_value
         )
 
         tool_topic_filter = EntityFilter(
-            include_tool_topics,
-            exclude_tool_topics,
+            included_tool_topics,  # type: ignore
+            excluded_tool_topics,  # type: ignore
         )
         tool_service_filter = EntityFilter(
-            include_tool_services,
-            exclude_tool_services,
-        )  # type: ignore
+            included_tool_services,  # type: ignore
+            excluded_tool_services,  # type: ignore
+        )
 
-        tools = []
+        tools: Sequence[Tool] = []
 
         for node_name in self.get_node_names():
             if node_name == self.get_name():
                 continue
-            tools += tool_topic_filter.apply(Topic.discover(self))
-            tools += tool_service_filter.apply(Service.discover(self))
+            tools += tool_topic_filter.apply(Topic.discover(self))  # type: ignore
+            tools += tool_service_filter.apply(Service.discover(self))  # type: ignore
 
         for tool in tools:
             # check if tool already setup
-            if any(name in self.tools for name in tool.get_names()):
+            if tool.get_name() in self.tools:
                 continue
-            for name in tool.get_names():
-                self.tools[name] = tool
+            tool.setup_tool()
+            self.tools[tool.get_name()] = tool
 
-        definitions = []
-        for tool in self.tools.values():
-            definitions += tool.list_tools()
+        definitions = [tool.get_tool_metadata() for tool in self.tools.values()]
 
         return definitions
 
@@ -220,14 +229,15 @@ class MCPNode(Node):
         return MessageAdapter(call_result).get_content_blocks()
 
     async def _call_async(self, uri: str, parameters: dict):
-        result = self.tools[uri].call_tool(self, uri, parameters)
+        result = self.tools[uri].call_tool(parameters)
         if result is not None:
             return await self._wait_for_response(result)
         return None
 
     async def _wait_for_response(self, future):
         """Wait for response asynchronously without blocking the event loop."""
-        while rclpy.ok() and not future.done():
+        while rclpy.ok() and not future.done():  # type: ignore
+            # [TODO] https://github.com/ros2/rclpy/pull/1399
             await asyncio.sleep(0.01)  # Small delay to prevent busy waiting
 
         if future.done():
