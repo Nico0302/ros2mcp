@@ -1,6 +1,9 @@
-![ros2mcp](./assets/artwork.jpg)
+![ros2mcp](./assets/github_dark.svg#gh-dark-mode-only)
+![ros2mcp](./assets/github_light.svg#gh-light-mode-only)
 
-Expose arbitrary [ROS 2](https://www.ros.org/) services as [MCP](https://modelcontextprotocol.io/) tools and list topics as resources.
+Expose arbitrary [ROS 2](https://www.ros.org/) services and topics as [MCP](https://modelcontextprotocol.io/) tools and list topics as resources.
+
+![Example of ROS to MCP translation](./assets/ros2mcp_diagram.svg)
 
 The `mcp_server` node can translate any ROS topic and service into a MCP resource or tool (including source comments as parameter descriptions).
 
