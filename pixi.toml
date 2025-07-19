@@ -64,6 +64,7 @@ ros-jazzy-nav2-bringup = "*"
 termcolor = ">=3.1.0,<4"
 openai = ">=1.93.0,<2"
 python-dotenv = ">=1.1.1,<2"
+ros-jazzy-rmw-cyclonedds-cpp = ">=2.2.3,<3"
 
 [pypi-dependencies]
 # docs
