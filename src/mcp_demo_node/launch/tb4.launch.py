@@ -8,16 +8,16 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     return LaunchDescription(
         [
-            # IncludeLaunchDescription(
-            #     PathJoinSubstitution(
-            #         [
-            #             FindPackageShare("nav2_bringup"),
-            #             "launch",
-            #             "tb4_simulation_launch.py",
-            #         ]
-            #     ),
-            #     launch_arguments={"headless": "False"}.items(),
-            # ),
+            IncludeLaunchDescription(
+                PathJoinSubstitution(
+                    [
+                        FindPackageShare("nav2_bringup"),
+                        "launch",
+                        "tb4_simulation_launch.py",
+                    ]
+                ),
+                launch_arguments={"headless": "False"}.items(),
+            ),
             Node(
                 package="mcp_demo_node",
                 executable="node",

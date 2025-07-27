@@ -108,7 +108,6 @@ class McpDemoNode(Node):
             waypoints=[waypoint.to_message(position) for waypoint in self.waypoint_list]
         )
         self.waypoints_publisher_.publish(waypoint_list)
-        self.get_logger().info('Publishing: "%s"' % waypoint_list)
 
     def pose_listener_callback(self, msg: PoseWithCovarianceStamped):
         """
