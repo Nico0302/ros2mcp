@@ -7,7 +7,7 @@ Expose arbitrary [ROS 2](https://www.ros.org/) services and topics as [MCP](http
 
 The `mcp_server` node can translate any ROS topic and service into a MCP resource or tool (including source comments as parameter descriptions).
 
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/yN2vLpf2-HE?si=RkVk6Or2y_l09XCz" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+[![Demo Video with TurtleBot4 and Gazebo](https://img.youtube.com/vi/yN2vLpf2-HE/0.jpg)](https://www.youtube.com/watch?v=yN2vLpf2-HE)
 
 # Demo Setup
 
